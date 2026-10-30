@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>오늘의 바디체크</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#3f8a3a">
+<meta name="description" content="수면·컨디션·식사·운동을 매일 간단히 기록하는 개인 웰니스 앱">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <h1>오늘의 바디체크</h1>
+    <nav class="tabs" aria-label="화면">
+      <a href="#today" data-tab="today">오늘</a>
+      <a href="#week" data-tab="week">주간</a>
+      <a href="#settings" data-tab="settings">설정</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="main"><p class="muted">불러오는 중…</p></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<noscript><p class="wrap">이 앱은 자바스크립트가 필요해요.</p></noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
