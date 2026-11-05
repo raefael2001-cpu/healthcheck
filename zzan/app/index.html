@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>짠 (ZZAN)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="갑자기 돌아온 건배사, 3초 만에 짠!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@400;600;800&display=swap">
+<style>
+/* 레이아웃: 한 화면 앱. 위에서부터 대상 고르기 → 제시어 → 카드 덱(가운데, 스와이프) → 버튼. 크게 보기는 검은 무대 전체 화면. */
+:root {
+  --bg: #eef2ef;
+  --surface: #ffffff;
+  --ink: #14261d;
+  --muted: #5d6e65;
+  --line: #d5ddd8;
+  --bottle: #1e7a50;      /* 소주병 초록 */
+  --bottle-ink: #ffffff;
+  --foam: #e8a317;        /* 맥주 거품 노랑 */
+  --foam-ink: #1d1500;
+  --foam-text: #8f5d00;
+  --pass: #7f8a84;
+  --scrim: rgba(10, 20, 15, .45);
+  --shadow: 0 1px 2px rgba(20, 38, 29, .08), 0 14px 32px -14px rgba(20, 38, 29, .28);
+  --stage-bg: #000000;    /* 크게 보기: 테마와 상관없이 고대비 */
+  --stage-fg: #ffffff;
+  --stage-hl: #ffd24a;
+  --stage-dim: #a0a0a0;
+  --f-display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-body: "Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1f18; --surface: #172d23; --ink: #e8f2ec; --muted: #9db3a7; --line: #2a463b;
+    --bottle: #4cc28a; --bottle-ink: #08170f; --foam: #f5b83d; --foam-ink: #1d1500; --foam-text: #f5b83d;
+    --pass: #8a9c93; --scrim: rgba(0, 0, 0, .6);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 14px 32px -14px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1f18; --surface: #172d23; --ink: #e8f2ec; --muted: #9db3a7; --line: #2a463b;
+  --bottle: #4cc28a; --bottle-ink: #08170f; --foam: #f5b83d; --foam-ink: #1d1500; --foam-text: #f5b83d;
+  --pass: #8a9c93; --scrim: rgba(0, 0, 0, .6);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 14px 32px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+
+html { height: 100%; box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+*, *::before, *::after { box-sizing: inherit; }
+[hidden] { display: none !important; }
+body {
+  height: 100%; margin: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+body.noscroll { overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--foam); outline-offset: 2px; }
+
+.app {
+  min-height: 100%; max-width: 520px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 12px;
+  padding-block: 14px 18px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* 머리 */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { font-family: var(--f-display); font-size: 40px; line-height: 1; color: var(--bottle); }
+.slogan { font-size: 13px; line-height: 1.35; color: var(--muted); font-weight: 600; }
+.saved-btn {
+  flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); font-weight: 800; font-size: 14px;
+}
+.saved-btn b { color: var(--bottle); font-variant-numeric: tabular-nums; }
+
+/* 대상 고르기 */
+.targets {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+}
+.targets button {
+  border: 0; background: transparent; color: var(--muted); border-radius: 12px;
+  padding: 9px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-weight: 800; font-size: 15px; line-height: 1.2;
+}
+.targets button small { font-weight: 600; font-size: 11px; font-variant-numeric: tabular-nums; opacity: .85; }
+.targets button[aria-checked="true"] { background: var(--bottle); color: var(--bottle-ink); }
+
+/* 제시어 */
+.find { display: flex; gap: 8px; }
+.find input {
+  flex: 1; min-width: 0; min-height: 46px; padding: 0 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  font: 600 16px var(--f-body);
+}
+.find input::placeholder { color: var(--muted); font-weight: 400; }
+.btn {
+  min-height: 46px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font-weight: 800; font-size: 15px; white-space: nowrap;
+}
+.btn-bottle { background: var(--bottle); color: var(--bottle-ink); border-color: transparent; }
+.btn-foam { background: var(--foam); color: var(--foam-ink); border-color: transparent; }
+.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; min-height: 34px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--muted); font-weight: 600; font-size: 14px;
+}
+.chip[aria-pressed="true"] { border-color: var(--bottle); color: var(--bottle); background: var(--surface); font-weight: 800; }
+.note { margin: 0; font-size: 14px; color: var(--muted); }
+.link { border: 0; background: none; padding: 0; color: var(--bottle); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+
+/* 카드 덱 */
+.deck { position: relative; flex: 1; min-height: 340px; display: grid; }
+.stack-edge {
+  position: absolute; left: 14px; right: 14px; top: 16px; bottom: -8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px; opacity: .55;
+}
+.card {
+  position: relative; z-index: 1; min-width: 0; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow);
+  padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 14px;
+  touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab;
+}
+.card.enter { animation: pop .22s ease-out; }
+@keyframes pop { from { transform: translateY(10px) scale(.97); opacity: .4; } to { transform: none; opacity: 1; } }
+.card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kw { font-family: var(--f-display); font-size: 22px; line-height: 1; letter-spacing: .04em; }
+.who { font-size: 13px; font-weight: 800; color: var(--muted); }
+.skill {
+  margin-left: auto; padding: 4px 10px; border-radius: 999px;
+  background: var(--foam); color: var(--foam-ink); font-size: 12px; font-weight: 800;
+}
+.lines { list-style: none; margin: 0; padding: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+.line { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; align-items: start; }
+.syl {
+  width: 46px; height: 46px; border-radius: 12px; background: var(--bottle); color: var(--bottle-ink);
+  font-family: var(--f-display); font-size: 27px; line-height: 46px; text-align: center;
+}
+.line.two .syl { background: var(--foam); color: var(--foam-ink); }
+.role { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: .04em; color: var(--muted); }
+.txt p { margin: 3px 0 0; font-size: 18px; font-weight: 600; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
+.line.two .txt p { font-family: var(--f-display); font-weight: 400; font-size: 23px; line-height: 1.35; }
+.init { font-style: normal; color: var(--bottle); }
+.line.two .init { color: var(--foam-text); }
+.beats { display: inline-flex; flex-wrap: wrap; gap: 4px 6px; }
+.beat { display: inline-flex; flex-direction: column; align-items: center; }
+.beat::before { content: "●"; font-size: .36em; line-height: 1; margin-bottom: .3em; color: var(--foam-text); }
+.cw { display: inline-block; }
+.card-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; font-size: 13px; color: var(--muted); }
+.tip { min-width: 0; }
+.count { flex: none; font-variant-numeric: tabular-nums; font-weight: 600; }
+.stamp {
+  position: absolute; top: 54px; padding: 2px 12px; border: 3px solid; border-radius: 10px;
+  font-family: var(--f-display); font-size: 26px; opacity: 0; pointer-events: none; background: var(--surface);
+}
+.stamp-save { left: 16px; color: var(--bottle); transform: rotate(-12deg); }
+.stamp-pass { right: 16px; color: var(--pass); transform: rotate(12deg); }
+.empty { margin: auto; color: var(--muted); }
+
+.actions { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 8px; padding-top: 6px; }
+.actions .btn { min-height: 52px; }
+.howto { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); text-wrap: balance; }
+
+/* 크게 보기 */
+.stage {
+  position: fixed; inset: 0; z-index: 50; background: var(--stage-bg); color: var(--stage-fg);
+  display: flex; flex-direction: column; gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+}
+.stage-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.stage-meta { font-size: 14px; color: var(--stage-dim); font-weight: 600; min-width: 0; }
+.stage-close {
+  flex: none; min-height: 44px; padding: 0 18px; border-radius: 999px;
+  border: 1px solid #4a4a4a; background: #161616; color: var(--stage-fg); font-weight: 800;
+}
+.stage-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+.stage-inner { --fs: 64px; display: flex; flex-direction: column; gap: .2em; }
+.stage .s-role { font-size: 15px; font-weight: 800; letter-spacing: .06em; color: var(--stage-dim); }
+.stage .s1 { margin: 0 0 .5em; font-size: calc(var(--fs) * .52); font-weight: 800; line-height: 1.3; word-break: keep-all; }
+.stage .s2 { margin: 0; font-family: var(--f-display); font-size: var(--fs); line-height: 1.18; color: var(--stage-hl); word-break: keep-all; }
+.stage .init { color: var(--stage-hl); }
+.stage .s2 .init { color: var(--stage-fg); }
+.stage .beat::before { color: var(--stage-fg); }
+.stage-foot { font-size: 13px; color: var(--stage-dim); text-align: center; font-variant-numeric: tabular-nums; }
+
+/* 저장함 */
+.scrim { position: fixed; inset: 0; z-index: 40; background: var(--scrim); }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-width: 520px; max-height: 82%; margin: 0 auto;
+  background: var(--surface); color: var(--ink); border-radius: 22px 22px 0 0; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sheet-head h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; }
+.saved-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.saved-item { border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.saved-meta { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.saved-meta b { font-family: var(--f-display); font-weight: 400; font-size: 18px; }
+.saved-meta span { font-size: 13px; color: var(--muted); font-weight: 600; }
+.saved-item p { margin: 0; font-size: 15px; word-break: keep-all; overflow-wrap: anywhere; }
+.saved-actions { display: flex; gap: 8px; }
+.saved-actions .btn { min-height: 38px; font-size: 14px; }
+.saved-empty { color: var(--muted); text-align: center; padding: 24px 8px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 60;
+  transform: translate(-50%, 12px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 800; font-size: 14px;
+  max-width: calc(100% - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.stage:not([hidden]) ~ .toast { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <span class="logo">짠</span>
+      <span class="slogan">갑자기 돌아온 건배사,<br>3초 만에 짠!</span>
+    </div>
+    <button type="button" class="saved-btn" id="openSaved">저장함 <b id="savedCount">0</b></button>
+  </header>
+
+  <div class="targets" id="targets" role="radiogroup" aria-label="누구 앞에서 하나요?"></div>
+
+  <form class="find" id="findForm" autocomplete="off">
+    <input id="kw" type="search" maxlength="6" placeholder="제시어 (예: 건배)" aria-label="제시어">
+    <button type="submit" class="btn">찾기</button>
+    <button type="button" class="btn btn-foam" id="randomBtn">랜덤</button>
+  </form>
+  <div class="chips" id="chips" aria-label="제시어 목록"></div>
+  <p class="note" id="note" hidden></p>
+
+  <section class="deck" aria-label="건배사 카드">
+    <div class="stack-edge" aria-hidden="true"></div>
+    <article class="card" id="card" tabindex="0"></article>
+  </section>
+
+  <div class="actions">
+    <button type="button" class="btn" id="passBtn">← 패스</button>
+    <button type="button" class="btn btn-bottle" id="bigBtn">크게 보기</button>
+    <button type="button" class="btn" id="saveBtn">저장 →</button>
+  </div>
+  <p class="howto">→ 밀면 저장 · ← 밀면 다음 · 카드 누르면 크게 · 흔들면 랜덤</p>
+</div>
+
+<div class="stage" id="stage" role="dialog" aria-modal="true" aria-label="크게 보기" hidden>
+  <div class="stage-top">
+    <span class="stage-meta" id="stageMeta"></span>
+    <button type="button" class="stage-close" id="stageClose">닫기</button>
+  </div>
+  <div class="stage-body" id="stageBody"><div class="stage-inner" id="stageInner"></div></div>
+  <div class="stage-foot" id="stageWake"></div>
+</div>
+
+<div id="sheetWrap" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">저장한 건배사</h2>
+      <button type="button" class="btn" id="sheetClose">닫기</button>
+    </div>
+    <ul class="saved-list" id="savedList"></ul>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// 건배사 데이터: zzan/presets-draft.csv에서 만든 것. 건배사를 고치면 이 목록도 다시 만들어야 함.
+const DATA = [
+{"k": "건배", "t": "부장님", "l1": "건강하신 부장님 덕분에 올 한 해 든든했습니다,", "l2": "배운 대로 내년엔 더 잘하겠습니다, 다 같이 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "건배", "t": "동기", "l1": "건물주는 못 돼도,", "l2": "배!·짱!·하!·나!·는!·최!·강!", "c": "최강!", "s": "스타카토"},
+{"k": "건배", "t": "청첩장", "l1": "건강하게, 행복하게 오래오래 살아라!", "l2": "배 아플 만큼 부럽게 잘 살아라, 짠!", "c": "잘 살아라!", "s": "콜&리스폰스"},
+{"k": "건배", "t": "가족", "l1": "건강하게 모인 우리 가족,", "l2": "배부르게 웃으며 오래오래 함께, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "사랑", "t": "부장님", "l1": "사랑받는 팀에는 늘 좋은 리더가 있습니다,", "l2": "랑데부 약속! 내년 이 자리, 더 큰 성과로 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "사랑", "t": "동기", "l1": "사는 게 힘들어도 우리 우정은 영원하다…", "l2": "랑께! 그러니까 오늘은 니가 쏘랑께, 짠!", "c": "쏘랑께!", "s": "훅&드롭"},
+{"k": "사랑", "t": "청첩장", "l1": "사랑으로 만난 두 사람!", "l2": "랑데부 평생 계약 체결! 짠!", "c": "평생 계약!", "s": "콜&리스폰스"},
+{"k": "사랑", "t": "가족", "l1": "사랑하는 우리 가족, 오늘처럼 웃는 날만!", "l2": "랑께~ 오래오래 건강하랑께, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "행복", "t": "부장님", "l1": "행복한 일터, 우리가 만듭니다!", "l2": "복 받은 우리 팀, 다 같이 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "행복", "t": "동기", "l1": "행운까진 안 바란다,", "l2": "복!·권!·당!·첨!·딱!·한!·번!", "c": "딱 한 번!", "s": "스타카토"},
+{"k": "행복", "t": "청첩장", "l1": "행복하게 잘 살아라, 우리 신랑 신부!", "l2": "복은 두 배로, 다툼은 반으로, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "행복", "t": "가족", "l1": "행복이 별건가요, 이렇게 모이면 행복이지!", "l2": "복 많이 받으시고 늘 건강하세요, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "건강", "t": "부장님", "l1": "건배 잔 높이 들고, 올 한 해 고생 많으셨습니다!", "l2": "강철 체력 우리 팀, 다 같이 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "건강", "t": "동기", "l1": "건강 생각해서 오늘은 딱 한 잔만…", "l2": "강제는 아닌데, 원샷!", "c": "원샷!", "s": "훅&드롭"},
+{"k": "건강", "t": "청첩장", "l1": "건강하게 오래오래 서로 아껴 주길!", "l2": "강물처럼 잔잔하게, 평생 짠!", "c": "평생 짠!", "s": "콜&리스폰스"},
+{"k": "건강", "t": "가족", "l1": "건강이 최고! 우리 어머니 아버지!", "l2": "강건하게 백 세까지, 다 같이 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "성공", "t": "부장님", "l1": "성과는 부장님 리더십으로,", "l2": "공은 우리 모두에게, 다 같이 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "성공", "t": "동기", "l1": "성과급 들어오면 내가 쏜다!", "l2": "공약은 공약일 뿐, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "성공", "t": "청첩장", "l1": "성혼을 진심으로 축하합니다!", "l2": "공식 품절 인증, 이제 반품 불가! 짠!", "c": "반품 불가!", "s": "훅&드롭"},
+{"k": "성공", "t": "가족", "l1": "성실하게 살아온 우리 가족,", "l2": "공든 탑은 안 무너진다, 다 같이 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "우리", "t": "부장님", "l1": "우리는 하나다!", "l2": "리더와 함께 끝까지 간다, 짠!", "c": "끝까지 간다!", "s": "콜&리스폰스"},
+{"k": "우리", "t": "동기", "l1": "우리 우정 영원하자, 진심으로…", "l2": "리필은 니가 해, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "우리", "t": "청첩장", "l1": "우리 친구 결혼한다!", "l2": "리액션은 크게, 축하는 진하게, 짠!", "c": "축하해!", "s": "콜&리스폰스"},
+{"k": "우리", "t": "가족", "l1": "우리 가족 다 모였네!", "l2": "리모컨은 아버지께, 행복은 모두에게, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "오늘", "t": "부장님", "l1": "오늘 이 자리 만들어 주셔서 감사합니다,", "l2": "늘 지금처럼 함께 갑시다, 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "오늘", "t": "동기", "l1": "오늘 야근 없이 퇴근한 우리,", "l2": "늘!·이!·렇!·게!·칼!·퇴!·짠!", "c": "칼퇴 짠!", "s": "스타카토"},
+{"k": "오늘", "t": "청첩장", "l1": "오늘의 주인공, 예비 신랑 신부!", "l2": "늘 행복해라, 오늘 밥값도 부탁해! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "오늘", "t": "가족", "l1": "오늘처럼만 웃으며 살아요!", "l2": "늘 건강하고 늘 화목하게, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "최고", "t": "부장님", "l1": "최고의 팀은?", "l2": "고민할 것 없이 우리 팀! 짠!", "c": "우리 팀!", "s": "콜&리스폰스"},
+{"k": "최고", "t": "동기", "l1": "최대한 즐기자, 오늘만큼은,", "l2": "고!·민!·은!·내!·일!·로!·짠!", "c": "짠!", "s": "스타카토"},
+{"k": "최고", "t": "청첩장", "l1": "최고의 짝을 만난 걸 축하해!", "l2": "고생 끝, 행복 시작! 짠!", "c": "행복 시작!", "s": "콜&리스폰스"},
+{"k": "최고", "t": "가족", "l1": "최고의 보물은 우리 가족,", "l2": "고맙고 사랑합니다, 다 같이 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "감사", "t": "부장님", "l1": "감사한 마음을 이 잔에 가득 담아,", "l2": "사기 충천! 내년에도 함께 갑시다, 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "감사", "t": "동기", "l1": "감사합니다, 오늘 술값 내 주실 분…", "l2": "사다리 타기로 정하자! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "감사", "t": "청첩장", "l1": "감동적인 두 사람의 만남에,", "l2": "사랑 가득, 축복 가득! 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "감사", "t": "가족", "l1": "감사합니다, 낳아 주시고 길러 주셔서,", "l2": "사랑합니다, 오래오래 건강하세요! 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "행운", "t": "부장님", "l1": "행운은 준비된 팀에게 온다!", "l2": "운도 실력, 우리 팀 짠!", "c": "운도 실력!", "s": "콜&리스폰스"},
+{"k": "행운", "t": "동기", "l1": "행운의 여신님, 이번엔 제발,", "l2": "운!·빨!·로!·연!·봉!·대!·박!", "c": "대박!", "s": "스타카토"},
+{"k": "행운", "t": "청첩장", "l1": "행운아는 바로 너, 이런 짝을 만났으니!", "l2": "운은 다 썼으니 이제부턴 노력이다! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "행운", "t": "가족", "l1": "행운이 가득한 우리 집,", "l2": "운수대통, 만사형통! 짠!", "c": "만사형통!", "s": "크레센도"},
+{"k": "희망", "t": "부장님", "l1": "희망찬 내년을 위하여!", "l2": "망설임 없이 함께 갑시다, 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "희망", "t": "동기", "l1": "희한하게 너희랑 마시면 술이 달다,", "l2": "망가져도 괜찮아, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "희망", "t": "청첩장", "l1": "희로애락 함께할 두 사람!", "l2": "망원경으로 봐도 둘만 보인다, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "희망", "t": "가족", "l1": "희망은 우리 아이들,", "l2": "망아지처럼 튼튼하게 자라라, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "대박", "t": "부장님", "l1": "대한민국 최고의 팀!", "l2": "박수 한 번 크게, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "대박", "t": "동기", "l1": "대충 살아도 우정만큼은 진심,", "l2": "박!·자!·맞!·춰!·원!·샷!", "c": "원샷!", "s": "스타카토"},
+{"k": "대박", "t": "청첩장", "l1": "대박! 진짜 결혼하는구나!", "l2": "박수는 크게, 축의금은 조금만! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "대박", "t": "가족", "l1": "대대손손 건강하고 화목하게,", "l2": "박장대소 웃음꽃 피는 우리 가족, 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "만세", "t": "부장님", "l1": "만나서 든든했던 올 한 해,", "l2": "세상에서 제일 멋진 우리 팀! 짠!", "c": "우리 팀!", "s": "크레센도"},
+{"k": "만세", "t": "동기", "l1": "만약에 로또 되면…", "l2": "세 명까지는 쏜다! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "만세", "t": "청첩장", "l1": "만만세! 우리 신랑 신부!", "l2": "세상 모든 축복이 너희에게! 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "만세", "t": "가족", "l1": "만수무강하세요, 우리 어머니 아버지!", "l2": "세월은 거꾸로, 백 세까지 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "승리", "t": "부장님", "l1": "승리를 향해 달려온 올 한 해,", "l2": "리그 1위는 우리 팀! 짠!", "c": "1위!", "s": "크레센도"},
+{"k": "승리", "t": "동기", "l1": "승질 나는 한 주였지만,", "l2": "리!·셋!·하!·고!·다!·시!·짠!", "c": "리셋!", "s": "스타카토"},
+{"k": "발전", "t": "부장님", "l1": "발로 뛴 만큼 성과가 났습니다,", "l2": "전진 또 전진, 우리 팀 짠!", "c": "전진!", "s": "크레센도"},
+{"k": "발전", "t": "동기", "l1": "발전하는 회사, 성장하는 나…", "l2": "전부 다 거짓말, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "성장", "t": "부장님", "l1": "성장하는 우리 회사!", "l2": "장밋빛 내일을 위하여, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "성장", "t": "동기", "l1": "성장통이 심했던 올 한 해,", "l2": "장!·하!·다!·우!·리!·짠!", "c": "장하다!", "s": "스타카토"},
+{"k": "성장", "t": "가족", "l1": "성큼성큼 자라는 우리 아이들,", "l2": "장하다 우리 강아지들, 다 같이 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "도전", "t": "부장님", "l1": "도전하는 팀에게 한계는 없습니다,", "l2": "전성기는 지금부터, 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "도전", "t": "동기", "l1": "도전! 올해는 꼭 다이어트 성공한다…", "l2": "전부 내일부터, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "도전", "t": "청첩장", "l1": "도전! 평생 한 사람만 사랑하기!", "l2": "전설이 되어라, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "열정", "t": "부장님", "l1": "열정 하면?", "l2": "정답은 우리 팀! 짠!", "c": "우리 팀!", "s": "콜&리스폰스"},
+{"k": "열정", "t": "동기", "l1": "열 받는 일 많았지만,", "l2": "정!·으!·로!·버!·틴!·다!·짠!", "c": "짠!", "s": "스타카토"},
+{"k": "목표", "t": "부장님", "l1": "목표를 향해 달려온 우리,", "l2": "표창장은 우리 팀 차지! 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "목표", "t": "동기", "l1": "목표는 이번 달 저축 100만 원…", "l2": "표류 중인 통장, 일단 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "화합", "t": "부장님", "l1": "화합하면?", "l2": "합심! 우리는 한 팀! 짠!", "c": "한 팀!", "s": "콜&리스폰스"},
+{"k": "화합", "t": "동기", "l1": "화나는 일은 오늘 다 털고,", "l2": "합!·체!·해!·서!·원!·샷!", "c": "원샷!", "s": "스타카토"},
+{"k": "화합", "t": "가족", "l1": "화목한 우리 집, 웃음이 넘치네!", "l2": "합심해서 오래오래 행복하자, 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "소통", "t": "부장님", "l1": "소통이 잘 되는 우리 팀, 올해 정말 즐거웠습니다,", "l2": "통 크게 내년도 대박 납시다, 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "소통", "t": "동기", "l1": "소통 잘하는 동기들아, 하나만 묻자…", "l2": "통장 잔고 괜찮냐? 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "소통", "t": "청첩장", "l1": "소중한 두 사람의 새 출발!", "l2": "통하는 마음으로 평생 함께! 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "승진", "t": "부장님", "l1": "승진 축하드립니다! 앞으로도 잘 부탁드립니다,", "l2": "진심을 담아, 다 같이 짠!", "c": "짠!", "s": "콜&리스폰스"},
+{"k": "승진", "t": "동기", "l1": "승진한 내 동기, 진심으로 축하한다…", "l2": "진짜 축하는 오늘 니 카드로! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "연봉", "t": "동기", "l1": "연차 쓰고 놀러 갈 생각만 하지 말고,", "l2": "봉!·인!·해!·제!·원!·샷!", "c": "봉인해제!", "s": "스타카토"},
+{"k": "연봉", "t": "동기", "l1": "연봉 협상 결과 발표하겠습니다…", "l2": "봉투는 얇아도 술잔은 두껍게! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "월급", "t": "동기", "l1": "월급날이 왔다! 통장에 들어오자마자…", "l2": "급속 탈출, 카드값으로! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "월급", "t": "동기", "l1": "월요일도 버텼다,", "l2": "급!·여!·날!·까!·지!·짠!", "c": "짠!", "s": "스타카토"},
+{"k": "퇴근", "t": "동기", "l1": "퇴근 시간 6시 정각,", "l2": "근!·무!·끝!·자!·유!·짠!", "c": "자유!", "s": "스타카토"},
+{"k": "퇴근", "t": "동기", "l1": "퇴근길에 집에 가려고 했는데…", "l2": "근데 왜 또 여기냐? 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "불금", "t": "동기", "l1": "불태우자 오늘 밤,", "l2": "금!·요!·일!·은!·직!·진!", "c": "직진!", "s": "스타카토"},
+{"k": "불금", "t": "동기", "l1": "불금이라 신나게 놀려고 했는데…", "l2": "금방 졸리니까 딱 한 잔만, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "주말", "t": "동기", "l1": "주말엔 꼭 운동하고 자기계발 하자…", "l2": "말은 그렇게 하지, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "주말", "t": "동기", "l1": "주 5일 버틴 우리,", "l2": "말!·없!·이!·원!·샷!", "c": "원샷!", "s": "스타카토"},
+{"k": "휴가", "t": "동기", "l1": "휴가 계획 다 세웠다, 비행기표도 끊었다…", "l2": "가는 날까지 버티자, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "휴가", "t": "동기", "l1": "휴가 승인 떨어진 날,", "l2": "가!·방!·싸!·고!·출!·발!", "c": "출발!", "s": "스타카토"},
+{"k": "로또", "t": "동기", "l1": "로또 1등 되면 회사 그만둔다고?", "l2": "또 다음 주에 보자, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "로또", "t": "동기", "l1": "로또는 꽝이어도,", "l2": "또!·만!·나!·자!·짠!", "c": "또 만나자!", "s": "스타카토"},
+{"k": "한잔", "t": "동기", "l1": "한 주 동안 고생했다,", "l2": "잔!·을!·들!·어!·짠!", "c": "짠!", "s": "스타카토"},
+{"k": "한잔", "t": "동기", "l1": "한 잔만 하자고 했지…", "l2": "잔 수는 세지 말자, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "한잔", "t": "부장님", "l1": "한 해 동안 이끌어 주셔서 감사합니다,", "l2": "잔을 높이 들고, 다 같이 짠!", "c": "짠!", "s": "크레센도"},
+{"k": "동기", "t": "동기", "l1": "동기들아, 우리가 버티는 이유,", "l2": "기!·대!·고!·버!·틴!·다!·짠!", "c": "짠!", "s": "스타카토"},
+{"k": "동기", "t": "동기", "l1": "동기 중에 제일 먼저 승진하는 사람이…", "l2": "기념으로 오늘 쏜다! 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "회식", "t": "동기", "l1": "회식은 업무의 연장이라던데…", "l2": "식사만 하고 빠지자, 짠!", "c": "짠!", "s": "훅&드롭"},
+{"k": "회식", "t": "동기", "l1": "회사는 힘들어도,", "l2": "식!·구!·같!·은!·우!·리!·짠!", "c": "짠!", "s": "스타카토"},
+{"k": "회식", "t": "부장님", "l1": "회사의 미래는!", "l2": "식지 않는 열정으로! 짠!", "c": "열정으로!", "s": "콜&리스폰스"}
+];
+
+const TARGETS = ['부장님', '동기', '청첩장', '가족'];
+const SKILL = {
+  '스타카토':   { r1: '나',            r2: '●마다 끊어서 다 같이',     tip: '●마다 딱! 딱! 끊어서 외치기' },
+  '크레센도':   { r1: '차분하게 시작',  r2: '점점 크게, 끝에서 터뜨리기', tip: '작게 시작해서 마지막 단어에서 터뜨리기' },
+  '콜&리스폰스': { r1: '선창 · 나',      r2: '후창 · 다 같이',           tip: '내가 1행을 외치면 다 같이 2행으로 받기' },
+  '훅&드롭':    { r1: '훅 · 진지하게',  r2: '드롭 · 한 박자 쉬고 반전',  tip: '1행은 진지하게, 한 박자 쉬고 2행에서 반전' },
+};
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 저장 못 해도 앱은 동작 */ } },
+};
+const idOf = (d) => d.k + '|' + d.t + '|' + d.l1;
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let target = TARGETS.includes(store.get('zzan.target')) ? store.get('zzan.target') : '부장님';
+let keyword = '';
+let order = [];
+let pos = 0;
+let busy = false;
+let saved = store.get('zzan.saved', []);
+if (!Array.isArray(saved)) saved = [];
+
+const card = $('#card');
+
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const current = () => order[pos];
+
+/* ---------- 그리기 ---------- */
+function renderTargets() {
+  $('#targets').innerHTML = TARGETS.map((t) => {
+    const n = DATA.filter((d) => d.t === t).length;
+    return `<button type="button" role="radio" aria-checked="${t === target}" data-t="${esc(t)}">${esc(t)}<small>${n}장</small></button>`;
+  }).join('');
+}
+
+function renderChips() {
+  const kws = [...new Set(DATA.filter((d) => d.t === target).map((d) => d.k))];
+  $('#chips').innerHTML = ['', ...kws].map((k) =>
+    `<button type="button" class="chip" aria-pressed="${k === keyword}" data-k="${esc(k)}">${k ? esc(k) : '전체'}</button>`
+  ).join('');
+}
+
+const initWrap = (text) => `<em class="init">${esc(text.charAt(0))}</em>${esc(text.slice(1))}`;
+
+function line2HTML(d) {
+  if (d.s === '스타카토' && d.l2.includes('·')) {
+    return `<span class="beats">${d.l2.split('·').map((b, i) =>
+      `<span class="beat"><span>${i === 0 ? initWrap(b) : esc(b)}</span></span>`).join('')}</span>`;
+  }
+  if (d.s === '크레센도') {
+    const w = d.l2.split(' ');
+    return w.map((x, i) => {
+      const size = (0.8 + 0.6 * i / Math.max(1, w.length - 1)).toFixed(2);
+      return `<span class="cw" style="font-size:${size}em">${i === 0 ? initWrap(x) : esc(x)}</span>`;
+    }).join(' ');
+  }
+  return initWrap(d.l2);
+}
+
+function cardHTML(d) {
+  const sk = SKILL[d.s] || { r1: '', r2: '', tip: '' };
+  return `
+    <div class="card-head">
+      <span class="kw">${esc(d.k)}</span>
+      <span class="who">${esc(d.t)}</span>
+      <span class="skill">${esc(d.s)}</span>
+    </div>
+    <ol class="lines">
+      <li class="line"><span class="syl" aria-hidden="true">${esc(d.k.charAt(0))}</span>
+        <div class="txt"><span class="role">${esc(sk.r1)}</span><p>${initWrap(d.l1)}</p></div></li>
+      <li class="line two"><span class="syl" aria-hidden="true">${esc(d.k.charAt(1))}</span>
+        <div class="txt"><span class="role">${esc(sk.r2)}</span><p>${line2HTML(d)}</p></div></li>
+    </ol>
+    <div class="card-foot"><span class="tip">${esc(sk.tip)}</span><span class="count">${pos + 1} / ${order.length}</span></div>
+    <span class="stamp stamp-save" aria-hidden="true">저장</span>
+    <span class="stamp stamp-pass" aria-hidden="true">패스</span>`;
+}
+
+function renderCard(enter) {
+  const d = current();
+  card.style.transition = 'none';
+  card.style.transform = '';
+  if (!d) { card.innerHTML = '<p class="empty">건배사가 없어요.</p>'; return; }
+  card.innerHTML = cardHTML(d);
+  card.setAttribute('aria-label', `${d.k}, ${d.t}, ${d.s}. ${d.l1} ${d.l2.split('·').join(' ')}`);
+  if (enter && !reduceMotion) { card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter'); }
+}
+
+function rebuild() {
+  let pool = DATA.filter((d) => d.t === target && (!keyword || d.k === keyword));
+  const note = $('#note');
+  note.hidden = true;
+  if (keyword && !pool.length) {
+    const others = TARGETS.filter((t) => DATA.some((d) => d.t === t && d.k === keyword));
+    note.innerHTML = others.length
+      ? `‘${esc(keyword)}’ 건배사는 ${others.map((t) => `<button type="button" class="link" data-switch="${esc(t)}" data-k="${esc(keyword)}">${esc(t)}</button>`).join(', ')} 쪽에 있어요.`
+      : `‘${esc(keyword)}’ 건배사는 아직 없어요. 아래 제시어 중에서 골라 보세요.`;
+    note.hidden = false;
+    keyword = '';
+    pool = DATA.filter((d) => d.t === target);
+  }
+  order = shuffle(pool);
+  pos = 0;
+  renderChips();
+  renderCard(true);
+}
+
+/* ---------- 넘기기·저장 ---------- */
+function next() {
+  pos++;
+  if (pos >= order.length) { order = shuffle(order); pos = 0; toast('다 봤어요. 다시 섞었어요'); }
+  renderCard(true);
+}
+
+function save(d) {
+  const id = idOf(d);
+  if (!saved.includes(id)) { saved.unshift(id); store.set('zzan.saved', saved); }
+  $('#savedCount').textContent = saved.length;
+}
+
+function fly(dir) {
+  const d = current();
+  if (busy || !d) return;
+  busy = true;
+  const dur = reduceMotion ? 0 : 220;
+  const stamp = card.querySelector(dir > 0 ? '.stamp-save' : '.stamp-pass');
+  if (stamp) stamp.style.opacity = 1;
+  card.style.transition = `transform ${dur}ms ease-in`;
+  card.style.transform = `translateX(${dir * 130}%) rotate(${dir * 16}deg)`;
+  setTimeout(() => {
+    if (dir > 0) { save(d); openBig(d); toast('저장했어요'); }
+    next();
+    busy = false;
+  }, dur);
+}
+
+/* 손가락으로 밀기 */
+let drag = null;
+function setDrag(dx) {
+  card.style.transform = `translateX(${dx}px) rotate(${dx / 20}deg)`;
+  const s = card.querySelector('.stamp-save');
+  const p = card.querySelector('.stamp-pass');
+  if (s) s.style.opacity = Math.max(0, Math.min(1, dx / 90));
+  if (p) p.style.opacity = Math.max(0, Math.min(1, -dx / 90));
+}
+function snap() {
+  card.style.transition = reduceMotion ? 'none' : 'transform .18s ease-out';
+  card.style.transform = '';
+  card.querySelectorAll('.stamp').forEach((s) => { s.style.opacity = 0; });
+}
+card.addEventListener('pointerdown', (e) => {
+  if (busy || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  drag = { x: e.clientX, y: e.clientY, id: e.pointerId, dx: 0, moved: false };
+  card.style.transition = 'none';
+});
+card.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x;
+  const dy = e.clientY - drag.y;
+  if (!drag.moved) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    if (Math.abs(dy) > Math.abs(dx)) { drag = null; return; }
+    drag.moved = true;
+    try { card.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
+  }
+  drag.dx = dx;
+  setDrag(dx);
+});
+function endDrag(e, cancelled) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const { dx, moved } = drag;
+  drag = null;
+  if (cancelled) { snap(); return; }
+  if (!moved) { openBig(current()); return; }
+  if (dx > 90) fly(1);
+  else if (dx < -90) fly(-1);
+  else snap();
+}
+card.addEventListener('pointerup', (e) => endDrag(e, false));
+card.addEventListener('pointercancel', (e) => endDrag(e, true));
+
+/* ---------- 크게 보기 + 화면 켜짐 유지 5분 ---------- */
+const WAKE_MS = 5 * 60 * 1000;
+let wakeLock = null;
+let wakeSupported = 'wakeLock' in navigator;
+let wakeUntil = 0;
+let wakeTimer = null;
+
+async function requestWake() {
+  if (!wakeSupported) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) { wakeLock = null; }
+}
+function showWake() {
+  const left = wakeUntil - Date.now();
+  const el = $('#stageWake');
+  if (left <= 0) { stopWake(); el.textContent = '5분이 지나 화면 켜짐 유지를 껐어요'; return; }
+  if (!wakeSupported) { el.textContent = '이 브라우저에서는 화면 켜짐 유지가 안 돼요'; return; }
+  const m = Math.floor(left / 60000);
+  const s = Math.floor((left % 60000) / 1000);
+  el.textContent = wakeLock ? `화면 켜짐 유지 중 ${m}:${String(s).padStart(2, '0')}` : '화면 켜짐 유지를 켜지 못했어요';
+}
+async function keepAwake() {
+  wakeUntil = Date.now() + WAKE_MS;
+  await requestWake();
+  showWake();
+  clearInterval(wakeTimer);
+  wakeTimer = setInterval(showWake, 1000);
+}
+function stopWake() {
+  clearInterval(wakeTimer);
+  wakeUntil = 0;
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && !$('#stage').hidden && Date.now() < wakeUntil && !wakeLock) requestWake();
+});
+
+function fitStage() {
+  const body = $('#stageBody');
+  const inner = $('#stageInner');
+  let fs = Math.min(150, Math.max(40, body.clientWidth * 0.17));
+  for (let i = 0; i < 80; i++) {
+    inner.style.setProperty('--fs', fs + 'px');
+    if (inner.offsetHeight <= body.clientHeight && inner.scrollWidth <= inner.clientWidth) break;
+    if (fs <= 24) break;
+    fs -= 3;
+  }
+}
+function openBig(d) {
+  if (!d) return;
+  const sk = SKILL[d.s] || { r1: '', r2: '' };
+  $('#stageMeta').textContent = `${d.k} · ${d.t} · ${d.s}`;
+  $('#stageInner').innerHTML = `
+    <span class="s-role">${esc(sk.r1)}</span><p class="s1">${initWrap(d.l1)}</p>
+    <span class="s-role">${esc(sk.r2)}</span><p class="s2">${line2HTML(d)}</p>`;
+  $('#stage').hidden = false;
+  document.body.classList.add('noscroll');
+  fitStage();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!$('#stage').hidden) fitStage(); });
+  keepAwake();
+  $('#stageClose').focus();
+}
+function closeBig() {
+  $('#stage').hidden = true;
+  document.body.classList.remove('noscroll');
+  stopWake();
+  card.focus({ preventScroll: true });
+}
+window.addEventListener('resize', () => { if (!$('#stage').hidden) fitStage(); });
+
+/* ---------- 랜덤 + 흔들기 ---------- */
+function randomPick(fromShake) {
+  keyword = '';
+  $('#kw').value = '';
+  $('#note').hidden = true;
+  order = shuffle(DATA.filter((d) => d.t === target));
+  pos = 0;
+  renderChips();
+  renderCard(true);
+  toast(fromShake ? '흔들어서 뽑았어요' : '랜덤으로 뽑았어요');
+  if (fromShake && navigator.vibrate) navigator.vibrate(40);
+}
+let motionOn = false;
+let lastAcc = null;
+let lastShake = 0;
+function onMotion(e) {
+  const a = e.accelerationIncludingGravity;
+  if (!a || a.x == null) return;
+  if (lastAcc) {
+    const delta = Math.abs(a.x - lastAcc.x) + Math.abs(a.y - lastAcc.y) + Math.abs(a.z - lastAcc.z);
+    const now = Date.now();
+    if (delta > 30 && now - lastShake > 1500 && $('#stage').hidden) { lastShake = now; randomPick(true); }
+  }
+  lastAcc = { x: a.x, y: a.y, z: a.z };
+}
+function enableMotion() {
+  if (motionOn || typeof DeviceMotionEvent === 'undefined') return;
+  if (typeof DeviceMotionEvent.requestPermission === 'function') {
+    // 아이폰: 버튼을 누를 때만 권한을 물어볼 수 있음
+    DeviceMotionEvent.requestPermission().then((s) => {
+      if (s === 'granted') { window.addEventListener('devicemotion', onMotion); motionOn = true; }
+    }).catch(() => {});
+  } else {
+    window.addEventListener('devicemotion', onMotion);
+    motionOn = true;
+  }
+}
+
+/* ---------- 저장함 ---------- */
+function renderSaved() {
+  const list = saved.map((id) => DATA.find((d) => idOf(d) === id)).filter(Boolean);
+  $('#savedList').innerHTML = list.length
+    ? list.map((d) => `
+      <li class="saved-item">
+        <div class="saved-meta"><b>${esc(d.k)}</b><span>${esc(d.t)} · ${esc(d.s)}</span></div>
+        <p>${esc(d.l1)}<br>${esc(d.l2)}</p>
+        <div class="saved-actions">
+          <button type="button" class="btn btn-bottle" data-big="${esc(idOf(d))}">크게 보기</button>
+          <button type="button" class="btn" data-del="${esc(idOf(d))}">삭제</button>
+        </div>
+      </li>`).join('')
+    : '<li class="saved-empty">아직 저장한 건배사가 없어요.<br>카드를 오른쪽으로 밀면 여기에 모여요.</li>';
+}
+function openSaved() { renderSaved(); $('#sheetWrap').hidden = false; document.body.classList.add('noscroll'); $('#sheetClose').focus(); }
+function closeSaved() { $('#sheetWrap').hidden = true; document.body.classList.remove('noscroll'); $('#openSaved').focus(); }
+
+/* ---------- 알림 ---------- */
+let toastTimer;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+/* ---------- 연결 ---------- */
+$('#targets').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-t]');
+  if (!b) return;
+  target = b.dataset.t;
+  store.set('zzan.target', target);
+  keyword = '';
+  $('#kw').value = '';
+  renderTargets();
+  rebuild();
+});
+$('#chips').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-k]');
+  if (!b) return;
+  keyword = b.dataset.k;
+  $('#kw').value = keyword;
+  rebuild();
+});
+$('#note').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-switch]');
+  if (!b) return;
+  target = b.dataset.switch;
+  keyword = b.dataset.k;
+  store.set('zzan.target', target);
+  renderTargets();
+  rebuild();
+});
+$('#findForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  keyword = $('#kw').value.replace(/\s/g, '');
+  $('#kw').blur();
+  rebuild();
+});
+$('#kw').addEventListener('input', () => { if (!$('#kw').value && keyword) { keyword = ''; rebuild(); } });
+$('#randomBtn').addEventListener('click', () => { enableMotion(); randomPick(false); });
+$('#passBtn').addEventListener('click', () => fly(-1));
+$('#saveBtn').addEventListener('click', () => fly(1));
+$('#bigBtn').addEventListener('click', () => openBig(current()));
+$('#stageClose').addEventListener('click', closeBig);
+$('#openSaved').addEventListener('click', openSaved);
+$('#sheetClose').addEventListener('click', closeSaved);
+$('#scrim').addEventListener('click', closeSaved);
+$('#savedList').addEventListener('click', (e) => {
+  const big = e.target.closest('[data-big]');
+  const del = e.target.closest('[data-del]');
+  if (big) { const d = DATA.find((x) => idOf(x) === big.dataset.big); closeSaved(); openBig(d); }
+  if (del) {
+    saved = saved.filter((id) => id !== del.dataset.del);
+    store.set('zzan.saved', saved);
+    $('#savedCount').textContent = saved.length;
+    renderSaved();
+    toast('삭제했어요');
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (!$('#stage').hidden) { if (e.key === 'Escape') closeBig(); return; }
+  if (!$('#sheetWrap').hidden) { if (e.key === 'Escape') closeSaved(); return; }
+  if (e.target.matches('input')) return;
+  if (e.key === 'ArrowRight') fly(1);
+  else if (e.key === 'ArrowLeft') fly(-1);
+  else if (e.key === 'Enter' && document.activeElement === card) openBig(current());
+});
+
+/* ---------- 시작 ---------- */
+$('#savedCount').textContent = saved.length;
+renderTargets();
+rebuild();
+if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') enableMotion();
+</script>
+</body>
+</html>
