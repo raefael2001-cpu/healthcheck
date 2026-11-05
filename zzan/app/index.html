@@ -115,6 +115,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border: 1px solid var(--line); background: transparent; color: var(--muted); font-weight: 600; font-size: 14px;
 }
 .chip[aria-pressed="true"] { border-color: var(--bottle); color: var(--bottle); background: var(--surface); font-weight: 800; }
+.chip-meme { border-style: dashed; color: var(--foam-text); font-weight: 800; }
+.chip-meme[aria-pressed="true"] { border-style: solid; border-color: transparent; background: var(--foam); color: var(--foam-ink); }
+.chip-sep { flex: none; width: 1px; margin: 6px 2px; background: var(--line); }
 .note { margin: 0; font-size: 14px; color: var(--muted); }
 .link { border: 0; background: none; padding: 0; color: var(--bottle); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 
@@ -139,6 +142,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   margin-left: auto; padding: 4px 10px; border-radius: 999px;
   background: var(--foam); color: var(--foam-ink); font-size: 12px; font-weight: 800;
 }
+.meme { padding: 2px 8px; border: 1px dashed currentColor; border-radius: 999px; color: var(--foam-text); font-size: 12px; font-weight: 800; }
 .lines { list-style: none; margin: 0; padding: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
 .line { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; align-items: start; }
 .syl {
@@ -282,8 +286,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-// 건배사 데이터: zzan/presets-draft.csv에서 만든 것. 건배사를 고치면 이 목록도 다시 만들어야 함.
-const DATA = [
+// 건배사 데이터: zzan/presets-draft.csv에서 자동으로 채움. 직접 고치지 말고 CSV를 고친 뒤 python3 zzan/build.py 실행.
+const DATA = /*PRESETS:START*/[
 {"k": "건배", "t": "부장님", "l1": "건강하신 부장님 덕분에 올 한 해 든든했습니다,", "l2": "배운 대로 내년엔 더 잘하겠습니다, 다 같이 짠!", "c": "짠!", "s": "크레센도"},
 {"k": "건배", "t": "동기", "l1": "건물주는 못 돼도,", "l2": "배!·짱!·하!·나!·는!·최!·강!", "c": "최강!", "s": "스타카토"},
 {"k": "건배", "t": "청첩장", "l1": "건강하게, 행복하게 오래오래 살아라!", "l2": "배 아플 만큼 부럽게 잘 살아라, 짠!", "c": "잘 살아라!", "s": "콜&리스폰스"},
@@ -379,8 +383,23 @@ const DATA = [
 {"k": "동기", "t": "동기", "l1": "동기 중에 제일 먼저 승진하는 사람이…", "l2": "기념으로 오늘 쏜다! 짠!", "c": "짠!", "s": "훅&드롭"},
 {"k": "회식", "t": "동기", "l1": "회식은 업무의 연장이라던데…", "l2": "식사만 하고 빠지자, 짠!", "c": "짠!", "s": "훅&드롭"},
 {"k": "회식", "t": "동기", "l1": "회사는 힘들어도,", "l2": "식!·구!·같!·은!·우!·리!·짠!", "c": "짠!", "s": "스타카토"},
-{"k": "회식", "t": "부장님", "l1": "회사의 미래는!", "l2": "식지 않는 열정으로! 짠!", "c": "열정으로!", "s": "콜&리스폰스"}
-];
+{"k": "회식", "t": "부장님", "l1": "회사의 미래는!", "l2": "식지 않는 열정으로! 짠!", "c": "열정으로!", "s": "콜&리스폰스"},
+{"k": "갓생", "t": "동기", "l1": "갓생 살자고 새벽 6시 알람 맞췄다…", "l2": "생각해 보니 오늘 술 약속이 있네, 짠!", "c": "짠!", "s": "훅&드롭", "m": "갓생", "d": "2026-11-05"},
+{"k": "갓생", "t": "동기", "l1": "갓생은 내일부터,", "l2": "생!·맥!·주!·부!·터!·짠!", "c": "짠!", "s": "스타카토", "m": "갓생", "d": "2026-11-05"},
+{"k": "갓생", "t": "동기", "l1": "갓생 사는 동기들 존경한다, 진심으로…", "l2": "생각만 하는 우리도 대단하다, 짠!", "c": "짠!", "s": "훅&드롭", "m": "갓생", "d": "2026-11-05"},
+{"k": "갓생", "t": "동기", "l1": "갓 입사한 우리,", "l2": "생!·존!·했!·다!·짠!", "c": "생존!", "s": "스타카토", "m": "갓생", "d": "2026-11-05"},
+{"k": "오늘", "t": "동기", "l1": "오늘부터 갓생 산다던 너,", "l2": "늘 하던 대로 여기 있네, 짠!", "c": "짠!", "s": "훅&드롭", "m": "갓생", "d": "2026-11-05"},
+{"k": "퇴근", "t": "동기", "l1": "퇴근 30분 전, 회의 취소 소식…", "l2": "근데 이거 실화냐? 야르!", "c": "야르!", "s": "훅&드롭", "m": "야르", "d": "2026-11-05"},
+{"k": "승진", "t": "동기", "l1": "승진 명단을 열어 보니…", "l2": "진짜 내 이름이다, 야르!", "c": "야르!", "s": "훅&드롭", "m": "야르", "d": "2026-11-05"},
+{"k": "주말", "t": "동기", "l1": "주말까지 딱 하루 남았다,", "l2": "말해 뭐해, 야르!", "c": "야르!", "s": "크레센도", "m": "야르", "d": "2026-11-05"},
+{"k": "월급", "t": "동기", "l1": "월급날 아침, 통장 알림이 울렸다,", "l2": "급여 입금 확인, 할렐야루!", "c": "할렐야루!", "s": "크레센도", "m": "할렐야루", "d": "2026-11-05"},
+{"k": "휴가", "t": "동기", "l1": "휴가 결재가 났습니다,", "l2": "가자 바다로, 할렐야루!", "c": "할렐야루!", "s": "크레센도", "m": "할렐야루", "d": "2026-11-05"},
+{"k": "연봉", "t": "동기", "l1": "연봉 협상 결과가 나왔다,", "l2": "봉급 인상 확정, 할렐야루!", "c": "할렐야루!", "s": "크레센도", "m": "할렐야루", "d": "2026-11-05"},
+{"k": "로또", "t": "동기", "l1": "로또 번호 세 개 맞았다…", "l2": "또 5천 원이네, 할렐야루!", "c": "할렐야루!", "s": "훅&드롭", "m": "할렐야루", "d": "2026-11-05"},
+{"k": "불금", "t": "동기", "l1": "불금이다, 다들 퇴근 준비 됐나?", "l2": "금!·요!·일!·밤!·꺄!·르!", "c": "꺄르!", "s": "스타카토", "m": "꺄르", "d": "2026-11-05"},
+{"k": "회식", "t": "동기", "l1": "회식 메뉴가 소고기란다,", "l2": "식!·전!·부!·터!·꺄!·르!", "c": "꺄르!", "s": "스타카토", "m": "꺄르", "d": "2026-11-05"},
+{"k": "한잔", "t": "동기", "l1": "한 주 버틴 우리에게 상을 주자,", "l2": "잔!·채!·워!·꺄!·르!", "c": "꺄르!", "s": "스타카토", "m": "꺄르", "d": "2026-11-05"}
+]/*PRESETS:END*/;
 
 const TARGETS = ['부장님', '동기', '청첩장', '가족'];
 const SKILL = {
@@ -407,6 +426,18 @@ let busy = false;
 let saved = store.get('zzan.saved', []);
 if (!Array.isArray(saved)) saved = [];
 
+/* 밈: 켜기/끄기 + 등록일로부터 3개월 지나면 자동으로 숨김 */
+const MEME_MONTHS = 3;
+let memeOn = store.get('zzan.meme', true) !== false;
+function memeExpired(d) {
+  if (!d.m || !d.d) return false;
+  const [y, mo, day] = d.d.split('-').map(Number);
+  if (!y || !mo || !day) return false;
+  return new Date() >= new Date(y, mo - 1 + MEME_MONTHS, day);
+}
+const visible = (d) => !memeExpired(d) && (memeOn || !d.m);
+const hasLiveMemes = (t) => DATA.some((d) => d.t === t && d.m && !memeExpired(d));
+
 const card = $('#card');
 
 function shuffle(a) {
@@ -419,14 +450,17 @@ const current = () => order[pos];
 /* ---------- 그리기 ---------- */
 function renderTargets() {
   $('#targets').innerHTML = TARGETS.map((t) => {
-    const n = DATA.filter((d) => d.t === t).length;
+    const n = DATA.filter((d) => d.t === t && visible(d)).length;
     return `<button type="button" role="radio" aria-checked="${t === target}" data-t="${esc(t)}">${esc(t)}<small>${n}장</small></button>`;
   }).join('');
 }
 
 function renderChips() {
-  const kws = [...new Set(DATA.filter((d) => d.t === target).map((d) => d.k))];
-  $('#chips').innerHTML = ['', ...kws].map((k) =>
+  const kws = [...new Set(DATA.filter((d) => d.t === target && visible(d)).map((d) => d.k))];
+  const toggle = hasLiveMemes(target)
+    ? `<button type="button" class="chip chip-meme" id="memeToggle" aria-pressed="${memeOn}">밈 포함 ${memeOn ? '켬' : '끔'}</button><span class="chip-sep" aria-hidden="true"></span>`
+    : '';
+  $('#chips').innerHTML = toggle + ['', ...kws].map((k) =>
     `<button type="button" class="chip" aria-pressed="${k === keyword}" data-k="${esc(k)}">${k ? esc(k) : '전체'}</button>`
   ).join('');
 }
@@ -454,6 +488,7 @@ function cardHTML(d) {
     <div class="card-head">
       <span class="kw">${esc(d.k)}</span>
       <span class="who">${esc(d.t)}</span>
+      ${d.m ? `<span class="meme">밈 · ${esc(d.m)}</span>` : ''}
       <span class="skill">${esc(d.s)}</span>
     </div>
     <ol class="lines">
@@ -478,17 +513,23 @@ function renderCard(enter) {
 }
 
 function rebuild() {
-  let pool = DATA.filter((d) => d.t === target && (!keyword || d.k === keyword));
+  const fits = (d) => d.t === target && visible(d);
+  let pool = DATA.filter((d) => fits(d) && (!keyword || d.k === keyword));
   const note = $('#note');
   note.hidden = true;
   if (keyword && !pool.length) {
-    const others = TARGETS.filter((t) => DATA.some((d) => d.t === t && d.k === keyword));
-    note.innerHTML = others.length
-      ? `‘${esc(keyword)}’ 건배사는 ${others.map((t) => `<button type="button" class="link" data-switch="${esc(t)}" data-k="${esc(keyword)}">${esc(t)}</button>`).join(', ')} 쪽에 있어요.`
-      : `‘${esc(keyword)}’ 건배사는 아직 없어요. 아래 제시어 중에서 골라 보세요.`;
+    const memeOnly = !memeOn && DATA.some((d) => d.t === target && d.k === keyword && d.m && !memeExpired(d));
+    const others = TARGETS.filter((t) => DATA.some((d) => d.t === t && d.k === keyword && visible(d)));
+    if (memeOnly) {
+      note.innerHTML = `‘${esc(keyword)}’ 건배사는 밈 카드예요. <button type="button" class="link" data-meme-on data-k="${esc(keyword)}">밈 포함 켜기</button>`;
+    } else if (others.length) {
+      note.innerHTML = `‘${esc(keyword)}’ 건배사는 ${others.map((t) => `<button type="button" class="link" data-switch="${esc(t)}" data-k="${esc(keyword)}">${esc(t)}</button>`).join(', ')} 쪽에 있어요.`;
+    } else {
+      note.innerHTML = `‘${esc(keyword)}’ 건배사는 아직 없어요. 아래 제시어 중에서 골라 보세요.`;
+    }
     note.hidden = false;
     keyword = '';
-    pool = DATA.filter((d) => d.t === target);
+    pool = DATA.filter(fits);
   }
   order = shuffle(pool);
   pos = 0;
@@ -623,7 +664,7 @@ function fitStage() {
 function openBig(d) {
   if (!d) return;
   const sk = SKILL[d.s] || { r1: '', r2: '' };
-  $('#stageMeta').textContent = `${d.k} · ${d.t} · ${d.s}`;
+  $('#stageMeta').textContent = `${d.k} · ${d.t} · ${d.s}${d.m ? ' · 밈' : ''}`;
   $('#stageInner').innerHTML = `
     <span class="s-role">${esc(sk.r1)}</span><p class="s1">${initWrap(d.l1)}</p>
     <span class="s-role">${esc(sk.r2)}</span><p class="s2">${line2HTML(d)}</p>`;
@@ -647,7 +688,7 @@ function randomPick(fromShake) {
   keyword = '';
   $('#kw').value = '';
   $('#note').hidden = true;
-  order = shuffle(DATA.filter((d) => d.t === target));
+  order = shuffle(DATA.filter((d) => d.t === target && visible(d)));
   pos = 0;
   renderChips();
   renderCard(true);
@@ -686,7 +727,7 @@ function renderSaved() {
   $('#savedList').innerHTML = list.length
     ? list.map((d) => `
       <li class="saved-item">
-        <div class="saved-meta"><b>${esc(d.k)}</b><span>${esc(d.t)} · ${esc(d.s)}</span></div>
+        <div class="saved-meta"><b>${esc(d.k)}</b><span>${esc(d.t)} · ${esc(d.s)}${d.m ? ` · 밈 ${esc(d.m)}` : ''}${memeExpired(d) ? ' (지난 밈)' : ''}</span></div>
         <p>${esc(d.l1)}<br>${esc(d.l2)}</p>
         <div class="saved-actions">
           <button type="button" class="btn btn-bottle" data-big="${esc(idOf(d))}">크게 보기</button>
@@ -720,6 +761,15 @@ $('#targets').addEventListener('click', (e) => {
   rebuild();
 });
 $('#chips').addEventListener('click', (e) => {
+  if (e.target.closest('#memeToggle')) {
+    memeOn = !memeOn;
+    store.set('zzan.meme', memeOn);
+    if (!memeOn && keyword && !DATA.some((d) => d.t === target && d.k === keyword && visible(d))) { keyword = ''; $('#kw').value = ''; }
+    toast(memeOn ? '밈 건배사를 넣었어요. 3개월 지나면 자동으로 빠져요' : '밈 건배사를 뺐어요');
+    renderTargets();
+    rebuild();
+    return;
+  }
   const b = e.target.closest('[data-k]');
   if (!b) return;
   keyword = b.dataset.k;
@@ -727,6 +777,15 @@ $('#chips').addEventListener('click', (e) => {
   rebuild();
 });
 $('#note').addEventListener('click', (e) => {
+  const m = e.target.closest('[data-meme-on]');
+  if (m) {
+    memeOn = true;
+    store.set('zzan.meme', true);
+    keyword = m.dataset.k;
+    renderTargets();
+    rebuild();
+    return;
+  }
   const b = e.target.closest('[data-switch]');
   if (!b) return;
   target = b.dataset.switch;
