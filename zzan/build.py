@@ -28,6 +28,13 @@ with open(CSV_PATH, encoding="utf-8") as f:
             item["d"] = (r.get("밈등록일") or "").strip()
             if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", item["d"]):
                 print(f"주의: {line_no}번째 줄 밈 등록일이 없거나 형식이 달라요 (예: 2026-11-05). 이 카드는 자동으로 숨겨지지 않아요.")
+        # 자리: 비우면 언제나 쓸 수 있는 카드. 여러 자리는 "/"로 나눔 (예: 송년회/신년회)
+        occasions = [o.strip() for o in (r.get("자리") or "").split("/") if o.strip()]
+        if occasions:
+            item["o"] = occasions
+        # 추천: 1을 넣으면 그 대상·자리에서 먼저 보여 줌
+        if (r.get("추천") or "").strip():
+            item["r"] = 1
         rows.append(item)
 
 data = "[\n" + ",\n".join(json.dumps(x, ensure_ascii=False) for x in rows) + "\n]"
@@ -37,4 +44,5 @@ new_html, n = re.subn(r"/\*PRESETS:START\*/.*?/\*PRESETS:END\*/",
 if n != 1:
     raise SystemExit("앱 파일에서 데이터 자리(PRESETS:START/END)를 찾지 못했어요")
 APP_PATH.write_text(new_html, encoding="utf-8")
-print(f"건배사 {len(rows)}개를 앱에 넣었어요 (밈 카드 {sum('m' in x for x in rows)}개)")
+print(f"건배사 {len(rows)}개를 앱에 넣었어요 "
+      f"(밈 {sum('m' in x for x in rows)}개, 자리 지정 {sum('o' in x for x in rows)}개, 추천 {sum('r' in x for x in rows)}개)")
