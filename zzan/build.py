@@ -17,11 +17,19 @@ with open(CSV_PATH, encoding="utf-8") as f:
         k = r["제시어"].strip()
         l1 = r["1행"].strip()
         l2 = r["2행"].strip()
-        # 2행시 규칙: 1행은 제시어 첫 글자, 2행은 둘째 글자로 시작
-        if len(k) != 2 or l1[:1] != k[0] or l2[:1] != k[1]:
-            raise SystemExit(f"{line_no}번째 줄: 첫 글자가 제시어와 안 맞아요 ({k} / {l1} / {l2})")
+        l3 = (r.get("3행") or "").strip()
+        # 규칙: 제시어는 2글자(2행시)나 3글자(3행시). 각 행은 제시어의 그 순서 글자로 시작
+        lines = [l1, l2, l3] if len(k) == 3 else [l1, l2]
+        if len(k) not in (2, 3):
+            raise SystemExit(f"{line_no}번째 줄: 제시어는 2글자나 3글자여야 해요 ({k})")
+        if len(k) == 2 and l3:
+            raise SystemExit(f"{line_no}번째 줄: 2글자 제시어인데 3행이 적혀 있어요 ({k})")
+        if any(line[:1] != ch for line, ch in zip(lines, k)):
+            raise SystemExit(f"{line_no}번째 줄: 첫 글자가 제시어와 안 맞아요 ({k} / {' / '.join(lines)})")
         item = {"k": k, "t": r["대상"].strip(), "l1": l1, "l2": l2,
                 "c": r["구호"].strip(), "s": r["기술"].strip()}
+        if l3:
+            item["l3"] = l3
         meme = (r.get("밈") or "").strip()
         if meme:
             item["m"] = meme
@@ -45,4 +53,4 @@ if n != 1:
     raise SystemExit("앱 파일에서 데이터 자리(PRESETS:START/END)를 찾지 못했어요")
 APP_PATH.write_text(new_html, encoding="utf-8")
 print(f"건배사 {len(rows)}개를 앱에 넣었어요 "
-      f"(밈 {sum('m' in x for x in rows)}개, 자리 지정 {sum('o' in x for x in rows)}개, 추천 {sum('r' in x for x in rows)}개)")
+      f"(3행시 {sum('l3' in x for x in rows)}개, 밈 {sum('m' in x for x in rows)}개, 자리 지정 {sum('o' in x for x in rows)}개, 추천 {sum('r' in x for x in rows)}개)")
